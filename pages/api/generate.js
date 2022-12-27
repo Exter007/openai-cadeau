@@ -19,7 +19,7 @@ export default async function (req, res) {
     const completion = await openai.createCompletion({
       model: "text-davinci-003",
       prompt: req.body.q,
-      temperature: 0.6,
+      temperature: 0.8,
       max_tokens: 1000,
     });
     // Return the result of the completion and the token used to make the request

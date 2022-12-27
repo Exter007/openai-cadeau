@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import styles from "../pages/index.module.css";
+import FirstStep from "./FirstStep";
+import SecondStep from "./SecondStep";
+import ThirdStep from "./ThirdStep";
 
 export default function Form() {
     const [question, setQuestion] = useState("");
@@ -7,19 +10,41 @@ export default function Form() {
     const [budgetMin, setBudgetMin] = useState(0);
     const [budgetMax, setBudgetMax] = useState(0);
 
-    const [step, setStep] = useState(0);
+    const [formData, setFormData] = useState({
+        prenom: "",
+        age: 0,
+        description: "",
+        budgetMin: 0,
+        budgetMax: 0,
+        email: "",
+    });
+
+    const [page, setPage] = useState(0);
     const [stepTitles, setStepTitles] = useState(["Description", "Budget", "Contact"]);
 
-    const disableAndAnimate = (id) => {
-        document.getElementById(id).disabled = true;
-        document.getElementById(id).classList.add(styles.animate);
+    const PageDisplay = () => {
+        if (page == 0) {
+            return <FirstStep formData={formData} setFormData={setFormData} />;
+        }
+        if (page == 1) {
+            return <SecondStep formData={formData} setFormData={setFormData} />;
+        }
+        if (page == 2) {
+            return <ThirdStep formData={formData} setFormData={setFormData} />;
+        }
+    }
+
+    const disableAndAnimate = (className) => {
+        const elements = document.getElementsByClassName(className);
+        while (elements.length > 0) {
+            elements[0].parentNode.removeChild(elements[0]);
+        }
     }
 
 
-    const handleSubmit = async (event) => {
-        disableAndAnimate("s");
-        const q = "Donne moi 3 idées de cadeau originales et l'estimation de prix, pour la personne que je te décris ici. " + question + " Avec un budget de " + budgetMin.toString() + "€ minimum et " + budgetMax.toString() + "€ maximum.";
-        event.preventDefault();
+    const handleSubmit = async () => {
+        disableAndAnimate("navB");
+        const q = "Donne moi 3 idées de cadeau originales et l'estimation de prix, pour la personne que je te décris ici. " + formData.prenom + ", " + formData.age + ", " + formData.description + ", avec un budget entre " + formData.budgetMin.toString() + "euros et " + formData.budgetMax.toString() + "euros.";
         const response = await fetch("/api/generate", {
             method: "POST",
             headers: {
@@ -31,33 +56,27 @@ export default function Form() {
         // Create array of answers
         const answers = result.split(/(\d\. )/);
         setAnswer(answers);
-        document.getElementById("s").disabled = false;
     };
 
     return (
         <div className={styles.div}>
             <h1> Trouvez une idée de cadeau ! </h1>
-            <form onSubmit={handleSubmit}>
-                <label htmlFor="prenom">Prénom de la personne</label>
-                <input
-                    type="text"
-                    value={question}
-                    onChange={(event) => setQuestion(event.target.value)}
-                />
-                <label htmlFor="budgetMin">Budget minimum</label>
-                <input
-                    type="number"
-                    value={budgetMin}
-                    onChange={(event) => setBudgetMin(event.target.value)}
-                />
-                <label htmlFor="budgetMax">Budget maximum</label>
-                <input
-                    type="number"
-                    value={budgetMax}
-                    onChange={(event) => setBudgetMax(event.target.value)}
-                />
-                <button id="s" disabled={false} type="submit">Envoyer</button>
-            </form>
+            <h2>{PageDisplay()}</h2>
+
+            <div className={styles.nav}>
+                <button className="navB" disabled={page == 0} hidden={page == 0} onClick={() => {
+                    setPage(page - 1);
+                }
+                }>Précédent</button>
+                <button className="navB" onClick={() => {
+                    if (page == stepTitles.length - 1) {
+                        handleSubmit();
+                    } else {
+                        setPage(page + 1);
+                    }
+                }
+                }>{page === stepTitles.length - 1 ? "Envoyer" : "Suivant"}</button>
+            </div>
             <div className={styles.result}>
                 {
                     answer.map((item, index) => {
@@ -72,6 +91,6 @@ export default function Form() {
                     )
                 }
             </div>
-        </div>
+        </div >
     );
 }
